@@ -89,6 +89,44 @@ ${data.classAccess}abstract class ${data.className}Gen ${data.extendsClause}${da
     }
 #end
 
+## define indexed properties
+#elseif (${property.kind.isIndexed()})
+    private ${property.extraFieldKeywords}${property.type}[] ${property.name}_;
+#if (${property.isReadable()})
+    ${property.readerAccess}${property.extraMethodKeywords}${property.type} ${property.isGet()}${property.upperName}(int index) {
+        return ${property.name}_[index];
+    }
+    ${property.readerAccess}${property.extraMethodKeywords}${property.type}[] ${property.isGet()}${property.upperName}() {
+        return ${property.name}_;
+    }
+#end
+#if (${property.isWriteable()})
+    ${property.writerAccess}${property.extraMethodKeywords}void set${property.upperName}(int index, ${property.type} value)  {
+#if (${property.isNotNull()})
+        if (value == null) throw new IllegalArgumentException("${property.name} cannot be null");
+#end
+#if (${property.isBound()})
+        ${property.type} oldValue = ${property.name}_[index];
+#end
+        ${property.name}_[index] = value;
+#if (${property.isBound()})
+        getPropertyChangeSupport().fireIndexedPropertyChange("${property.name}", index, oldValue, value);
+#end
+    }
+#end
+#if (${property.isWriteable()})
+    ${property.writerAccess}${property.extraMethodKeywords}void set${property.upperName}(${property.type}[] value)  {
+#if (${property.isBound()})
+        ${property.type}[] oldValue = ${property.name}_;
+#end
+        ${property.name}_ = value;
+#if (${property.isBound()})
+        getPropertyChangeSupport().firePropertyChange("${property.name}", oldValue, value);
+#end
+    }
+#end
+
+
 ## define list properties
 #elseif (${property.kind.isList()})
     private ${property.extraFieldKeywords}final java.util.List<${property.type}> ${property.pluralName}_ = new java.util.ArrayList<${property.type}>();
@@ -126,7 +164,7 @@ ${data.classAccess}abstract class ${data.className}Gen ${data.extendsClause}${da
     }
 #end
 
-## define list properties
+## define set properties
 #elseif (${property.kind.isSet()})
     private ${property.extraFieldKeywords}final java.util.Set<${property.type}> ${property.pluralName}_ = new java.util.HashSet<${property.type}>();
 #if (${property.isReadable()})
@@ -297,6 +335,8 @@ ${data.classAccess}abstract class ${data.className}Gen ${data.extendsClause}${da
 #else
             checkEquals(other.${property.name}_, ${property.name}_)${op}
 #end
+#elseif (${property.kind.isIndexed()})
+            java.util.Arrays.equals(other.${property.name}_, ${property.name}_)${op}
 #else
             checkEquals(other.${property.pluralName}_, ${property.pluralName}_)${op}
 #end
@@ -315,6 +355,8 @@ ${data.classAccess}abstract class ${data.className}Gen ${data.extendsClause}${da
 #end
 #if (${property.kind.isSimple()})
             ${property.intConversion}${op}
+#elseif (${property.kind.isIndexed()})
+            java.util.Arrays.hashCode(${property.name}_)${op}
 #else
             ${property.pluralName}_.hashCode()${op}
 #end
@@ -348,6 +390,8 @@ ${data.classAccess}abstract class ${data.className}Gen ${data.extendsClause}${da
 #if (!${property.omitFromToString})
 #if (${property.kind.isSimple()})
                "${comma}${property.name}=" + ${property.name}_${op}
+#elseif (${property.kind.isIndexed()})
+               "${comma}${property.name}=" + java.util.Arrays.toString(${property.name}_)${op}
 #else
                "${comma}${property.pluralName}=" + ${property.pluralName}_${op}
 #end
@@ -361,7 +405,7 @@ ${data.classAccess}abstract class ${data.className}Gen ${data.extendsClause}${da
                     java.util.Map<java.lang.String, java.lang.Object> map = new java.util.HashMap<java.lang.String, java.lang.Object>();
 #foreach ($property in ${data.properties})
 #if (${property.isReadable()})
-#if (${property.kind.isSimple()})
+#if (${property.kind.isSimple()}||${property.kind.isIndexed()})
                     map.put("${property.name}", ${property.isGet()}${property.upperName}());
         #else
                     map.put("${property.pluralName}", ${property.isGet()}${property.upperPluralName}());

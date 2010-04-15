@@ -69,7 +69,7 @@ package com.javadude.annotation;
  *
  */
 public enum PropertyKind {
-    SIMPLE, LIST, /* TODO: INDEXED, */ UNMODIFIABLE_LIST, SET, UNMODIFIABLE_SET, MAP, UNMODIFIABLE_MAP;
+    SIMPLE, LIST, INDEXED, UNMODIFIABLE_LIST, SET, UNMODIFIABLE_SET, MAP, UNMODIFIABLE_MAP;
     public String getPrefix() {
         switch (this) {
             case UNMODIFIABLE_SET:
@@ -97,6 +97,9 @@ public enum PropertyKind {
     }
     public boolean isSimple() {
         return this == SIMPLE;
+    }
+    public boolean isIndexed(){
+        return this == INDEXED;
     }
     public boolean isList() {
         return this == LIST || this == UNMODIFIABLE_LIST;
